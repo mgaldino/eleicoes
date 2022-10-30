@@ -45,3 +45,11 @@ for(i in 1:n){
 }
 df_voto1t <- lista_df %>% bind_rows()
 
+glimpse(df_voto1t)
+
+df_voto1t %>%
+  summarise(total_lula = sum(lula),
+            total_bolsonaro = sum(jair_bolsonaro),
+            total_validos = sum(votos_validos),
+            perc_lula = round(total_lula/total_validos, 4),
+            perc_bolso =round(total_bolsonaro/total_validos, 4))
