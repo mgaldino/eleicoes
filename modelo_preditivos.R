@@ -64,32 +64,17 @@ voto_zona_18 <- voto_bolso_haddad %>%
 
 ## Estimando modelos.
 #modelo simples
-fit1 <- stan_betareg(valido_2t ~ valido_1t+ valido1t_pt+ sg_uf, data = voto_zona_18, link = "logit",
-                     seed = 12345, iter = 5000)
-round(coef(fit1), 2)
-
-# modelo mais complexo
-fit2 <- stan_betareg(valido_2t ~ valido_1t + sg_uf, data = voto_zona_18, link = "logit",
-                     seed = 12345, iter = 5000)
-round(coef(fit2), 2)
-# priors
-prior_summary(fit1)
-prior_summary(fit2)
 
 fit3 <- stan_lmer(valido_2t ~ valido_1t + valido1t_pt + (1| sg_uf), data = voto_zona_18, seed = 12345, iter = 5000)
+prior_summary(fit3)
+round(coef(fit3), 2)
 pp_check(fit3)
 
-bayesplot_grid(
-  pp_check(fit1), pp_check(fit2), pp_check(fit3),
-  xlim = c(0,1),
-  ylim = c(0,4),
-  grid_args = list(ncol = 3)
-)
-
-pp_check(fit1)
-pp_check(fit2)
 
 rm(vote_2018)
+
+# preditiva posterior
+# criando banco de dados de 22 para prever 2t
 vote_22_zona_limpo <- vote_22_zona %>%
   select(valido_1t, valido1t_pt, sg_uf, total) %>%
   filter(!is.na(valido_1t))
@@ -102,11 +87,13 @@ y_rep <- as_tibble(t(posterior_predict(fit3, newdata))) %>%
 
 y_rep <- y_rep %>%
   clean_names()
+
+# 1k da preditiva posterior
 n <- 1000
 minha_amostra <- sample(1:length(y_rep), n)
 
 vote_22_zona_full <- bind_cols(vote_22_zona_limpo, y_rep[,minha_amostra])
-
+# calcula os votos válidos de cada uma das 1k previsões da posterior preditiva
 vote_22_zona_full1 <- vote_22_zona_full %>%
   mutate(across(paste("v",minha_amostra, sep=""), ~ .*total),) %>% # 6240
   ungroup() %>%
@@ -116,9 +103,9 @@ vote_22_zona_full1 <- vote_22_zona_full %>%
   select(starts_with("perc"))
 
 vec_bolso <- unlist(vote_22_zona_full1)
-round(quantile(vec_bolso, c(.025, .975)), 3)
 
-## comparando modelos
-loo1 <- loo(fit1)
-loo2 <- loo(fit2)
-loo_compare(loo1, loo2)
+# resumo das previsões
+summary(vec_bolso)
+
+# Ic 2,5% e 97,5%
+round(quantile(vec_bolso, c(.025, .975)), 3)
