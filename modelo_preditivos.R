@@ -84,16 +84,13 @@ saveRDS(fit4, file = "my_MODEL.rds")
 # preditiva posterior
 # criando banco de dados de 22 para prever 2t
 vote_22_zona_limpo <- vote_22_zona %>%
-  select(valido_1t, valido1t_pt, sg_uf, total) %>%
+  select(valido_1t, valido1t_pt, sg_uf, nr_zona, nm_municipio, cd_municipio, total) %>%
   filter(!is.na(valido_1t))
 
 newdata <- vote_22_zona_limpo %>%
-  select(-total)
+  select(-total, -nr_zona, -nm_municipio, -cd_municipio)
 
-y_rep <- as_tibble(t(posterior_predict(fit4, newdata))) %>%
-  clean_names()
-
-y_rep <- y_rep %>%
+y_rep <- as_tibble(t(posterior_predict(fit3, newdata))) %>%
   clean_names()
 
 # 1k da preditiva posterior
@@ -102,6 +99,7 @@ minha_amostra <- sample(1:length(y_rep), n)
 
 vote_22_zona_full <- bind_cols(vote_22_zona_limpo, y_rep[,minha_amostra])
 # calcula os votos válidos de cada uma das 1k previsões da posterior preditiva
+
 vote_22_zona_full1 <- vote_22_zona_full %>%
   mutate(across(paste("v",minha_amostra, sep=""), ~ .*total),) %>% # 6240
   ungroup() %>%

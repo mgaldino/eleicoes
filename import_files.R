@@ -1,5 +1,3 @@
-install.packages("googledrive")
-install.packages("googlesheets4", dependencies=T)
 # caregando bibliotecas
 
 library(googlesheets4)
